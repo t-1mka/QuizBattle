@@ -1,2 +1,2 @@
 # QuizBattle
-QuizBattle - веб-приложение.
+QuizBattle - веб-приложение созданное на Node.js.
