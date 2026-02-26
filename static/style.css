@@ -491,17 +491,19 @@ main {
     opacity: 0.6;
 }
 
+
 .game-option.correct {
-    background: linear-gradient(135deg, #059669, #047857);
-    border-color: #34d399;
-    box-shadow: 0 0 15px rgba(52, 211, 153, 0.4);
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+    opacity: 1;
 }
 .game-option.incorrect {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-    border-color: #f87171;
-    box-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+    opacity: 1;
 }
-
 .game-wait {
     text-align: center;
     color: rgba(255, 255, 255, 0.7);
