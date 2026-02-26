@@ -12,8 +12,20 @@ html, body {
 
 body {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    background: radial-gradient(circle at 10% 20%, rgb(33, 33, 46) 0%, rgb(15, 23, 42) 90%);
+    color: #f9fafb;
+    background-image: 
+        radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+    background-size: auto;
+    animation: gradientMove 15s ease infinite;
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 header {
@@ -38,7 +50,13 @@ main {
     padding: 0 16px;
     box-sizing: border-box;
 }
-
+.controls-group, .modal, .waiting-panel, .game-panel {
+    background: rgba(15, 23, 42, 0.6); 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
 .controls-group {
     margin-top: 7vh;
     display: flex;
@@ -126,7 +144,20 @@ main {
 .room-code-input::placeholder {
     color: #64748b;
 }
+.button-create:hover {
+    box-shadow: 0 0 20px rgba(79, 70, 229, 0.8), 0 14px 30px rgba(79, 70, 229, 0.6);
+}
+.button-join:hover {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 14px 30px rgba(16, 185, 129, 0.6);
+}
 
+.modal {
+    animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes modalPop {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
 .room-code-input:focus {
     border-color: #ffffff;
     box-shadow: 0 0 0 1px #ffffff;
@@ -461,17 +492,14 @@ main {
 }
 
 .game-option.correct {
-    background: #22c55e;
-    border-color: #22c55e;
-    color: white;
-    opacity: 1;
+    background: linear-gradient(135deg, #059669, #047857);
+    border-color: #34d399;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.4);
 }
-
 .game-option.incorrect {
-    background: #ef4444;
-    border-color: #ef4444;
-    color: white;
-    opacity: 1;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    border-color: #f87171;
+    box-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
 }
 
 .game-wait {
@@ -507,8 +535,15 @@ main {
     color: rgba(255, 255, 255, 0.9);
     margin: 0 0 20px 0;
 }
-
 @media (max-width: 768px) {
+    .button {
+        padding: 20px 24px; 
+        font-size: 17px;
+    }
+    .game-option {
+        padding: 18px;
+        font-size: 16px;
+    }
     main {
         padding: 0 12px;
     }

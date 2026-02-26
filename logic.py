@@ -113,7 +113,7 @@ def generate_questions_via_gigachat(count, topic, difficulty):
         return valid_questions
         
     except Exception as e:
-        print(f"GigaChat error: {e}") #только отладка
+        #print(f"GigaChat error: {e}")
         return None
 
 
@@ -412,13 +412,31 @@ def serve_action_js():
     return send_file(os.path.join(base_dir, 'action.js'), mimetype='application/javascript')
 
 if __name__ == '__main__':
-    # Запускаем get_token.py в отдельном потоке с задержкой
+    def get_local_ip():
+        try:
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except:
+            return None
+    
     def start_token_manager():
-        time.sleep(2)  # Даем время на запуск сервера
+        time.sleep(2) 
         try:
             subprocess.run([sys.executable, "get_token.py"], check=True)
         except:
             pass
+    
+    local_ip = get_local_ip()
+    
+    print("🎮 Запуск сервера викторины...")
+    print("📱 Адреса для подключения:")
+    print(f"   - Локальный: http://localhost:5000")
+    print(f"   - Мобильный: http://{local_ip}:5000")
+    print()
     
     token_thread = threading.Thread(target=start_token_manager, daemon=True)
     token_thread.start()
