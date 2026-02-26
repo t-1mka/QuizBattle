@@ -113,7 +113,7 @@ def generate_questions_via_gigachat(count, topic, difficulty):
         return valid_questions
         
     except Exception as e:
-        #print(f"GigaChat error: {e}")
+        #only for debug print(f"GigaChat error: {e}")
         return None
 
 
