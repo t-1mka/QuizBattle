@@ -6,4 +6,5 @@ QuizBattle - веб-приложение, представляющее собо�
 ⚙️Stack⚙️
 
 Backend: Python, Flask, SocketIO
+
 Frontend: Html, Css, JS
