@@ -92,11 +92,11 @@ function closeCreateModal() {
 
 createBtn.addEventListener('click', openCreateModal);
 modalClose.addEventListener('click', closeCreateModal);
-modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeCreateModal();
+modal.addEventListener('click', (i) => {
+    if (i.target === modal) closeCreateModal();
 });
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal && modal.classList.contains('is-open')) closeCreateModal();
+document.addEventListener('keydown', (i) => {
+    if (i.key === 'Escape' && modal && modal.classList.contains('is-open')) closeCreateModal();
 });
 
 createRoomForm.addEventListener('submit', (e) => {
@@ -104,9 +104,9 @@ createRoomForm.addEventListener('submit', (e) => {
     const playerName = document.getElementById('player-name').value.trim() || 'Игрок';
     const questionsCount = parseInt(document.getElementById('questions-count').value, 10) || 5;
     const difficulty = document.getElementById('difficulty').value;
-    const topic = document.getElementById('topic').value.trim() || 'Общие знания';
+    const topic = document.getElementById('topic').value.trim() || 'Школьная программа';
     if (!socket || !socket.connected) {
-        alert('Нет соединения с сервером');
+        alert('Ошибка при присоединении');
         return;
     }
     socket.emit('create_room', {
@@ -272,8 +272,8 @@ function onAnswerResult(data) {
         const t1 = teamNames.team1 || 'Команда 1';
         const t2 = teamNames.team2 || 'Команда 2';
         let text = `${t1}: ${s1} — ${t2}: ${s2}. `;
-        if (s1 > s2) text += `Победила ${t1}!`;
-        else if (s2 > s1) text += `Победила ${t2}!`;
+        if (s1 > s2) text += `${t1} побеждает!`;
+        else if (s2 > s1) text += `${t2} побеждает!`;
         else text += 'Ничья!';
         gameOverResultEl.textContent = text;
         gameOverEl.classList.add('visible');
