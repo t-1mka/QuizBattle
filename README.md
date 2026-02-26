@@ -3,6 +3,7 @@
 QuizBattle - веб-приложение, представляющее собой викторину.
 
 🆕Working with AI🆕
+
 Multiply Devices Sync
 
 ⚙️Stack⚙️
