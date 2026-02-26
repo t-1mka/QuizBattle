@@ -157,7 +157,7 @@ function onRoomCreated(data) {
     displayRoomCode.textContent = roomCode;
     renderPlayers(data.players);
     applyTeamNamesToUI();
-    startGameBtn.style.display = isHost ? 'block' : 'none';
+    if (startGameBtn) startGameBtn.style.display = isHost ? 'block' : 'none';
     if (team1NameInput) team1NameInput.disabled = !isHost;
     if (team2NameInput) team2NameInput.disabled = !isHost;
     showView('view-waiting');
@@ -173,7 +173,7 @@ function onRoomJoined(data) {
     displayRoomCode.textContent = roomCode;
     renderPlayers(data.players);
     applyTeamNamesToUI();
-    startGameBtn.style.display = isHost ? 'block' : 'none';
+    if (startGameBtn) startGameBtn.style.display = isHost ? 'block' : 'none';
     if (team1NameInput) team1NameInput.disabled = !isHost;
     if (team2NameInput) team2NameInput.disabled = !isHost;
     showView('view-waiting');
@@ -293,9 +293,7 @@ function onTeamNameUpdated(data) {
     if (data.team_names) {
         teamNames = data.team_names;
         applyTeamNamesToUI();
-        // Обновим список игроков, если он уже есть
         if (playersList && playersList.children.length > 0) {
-            // сервер отдельно шлёт игроков, так что здесь просто перерисуем при следующем событии
         }
     }
 }

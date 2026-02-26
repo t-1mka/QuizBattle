@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quiz Battle</title>
         <link href="/static/style.css" rel="stylesheet">
     </head>
@@ -8,8 +10,6 @@
         <header>
             <h1>Quiz Battle</h1>
         </header>
-
-        <!-- Главный экран: создать / присоединиться -->
         <main id="view-main" class="view">
             <div class="controls-group">
                 <section class="create">
@@ -37,8 +37,6 @@
                 </section>
             </div>
         </main>
-
-        <!-- Ожидание игроков -->
         <main id="view-waiting" class="view view-hidden">
             <div class="waiting-panel">
                 <p class="waiting-code">Код комнаты: <strong id="display-room-code"></strong></p>
@@ -72,8 +70,6 @@
                 </button>
             </div>
         </main>
-
-        <!-- Игра -->
         <main id="view-game" class="view view-hidden">
             <div class="game-panel">
                 <div class="game-scores">

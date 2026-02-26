@@ -2,20 +2,17 @@ import os
 import random
 import string
 import json
-import requests
 from flask import Flask, render_template, request, send_file
 from flask_socketio import SocketIO, emit, join_room
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, template_folder='template')
-app.config['SECRET_KEY'] = 'quiz-battle-secret'
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'quiz-battle-secret-' + os.urandom(16).hex())
 socketio = SocketIO(app, cors_allowed_origins='*')
 
-ROOMS = {}  # room_code -> room state
-
-YANDEX_IAM_TOKEN = os.getenv('YANDEX_GPT_IAM_TOKEN') or os.getenv('IAM_TOKEN')
-YANDEX_FOLDER_ID = os.getenv('YANDEX_GPT_FOLDER_ID') or os.getenv('FOLDER_ID')
-YANDEX_GPT_MODEL = os.getenv('YANDEX_GPT_MODEL', 'yandexgpt-lite')
-YANDEX_GPT_API_URL = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
+ROOMS = {}
 
 
 def gen_room_code():
@@ -26,8 +23,20 @@ def gen_room_code():
             return code
 
 
+def generate_questions(count, topic, difficulty):
+    """Генерация списка вопросов локально."""
+    print(f"=== Generating {count} questions for topic '{topic}' with difficulty '{difficulty}' ===")
+    
+    questions = _generate_questions_fallback(count, topic, difficulty)
+    print(f"=== Successfully generated {len(questions)} questions locally ===")
+    return questions
+
+
 def _generate_questions_fallback(count, topic, difficulty):
-    """Локальный генератор вопросов на случай, если YandexGPT недоступен."""
+    """Локальный генератор вопросов."""
+    print(f"=== Using local generator for {count} questions ===")
+    print(f"Topic: {topic}, Difficulty: {difficulty}")
+    
     questions = []
     for i in range(count):
         options = ['Вариант A', 'Вариант B', 'Вариант C', 'Вариант D']
@@ -40,98 +49,14 @@ def _generate_questions_fallback(count, topic, difficulty):
             'options': options,
             'correct_index': correct_index,
         })
+        
+        print(f"=== Question {i+1} ===")
+        print(f"Text: {questions[-1]['text']}")
+        print(f"Options: {options}")
+        print(f"Correct index: {correct_index} ({options[correct_index]})")
+    
+    print(f"=== Generated {len(questions)} questions ===")
     return questions
-
-
-def _generate_questions_via_yandex(count, topic, difficulty):
-    """Генерация вопросов через YandexGPT. Возвращает список вопросов или None при ошибке."""
-    if not YANDEX_IAM_TOKEN or not YANDEX_FOLDER_ID:
-        return None
-
-    system_text = (
-        'Ты помощник, который придумывает вопросы для викторины. '
-        'Отвечай только валидным JSON без комментариев и форматирования markdown.'
-    )
-    user_text = (
-        f'Сгенерируй {count} вопросов викторины на русском языке по теме "{topic}" '
-        f'со сложностью {difficulty}. '
-        'Ответ верни в виде JSON-массива объектов: '
-        '[{"text": "вопрос", "options": ["вариант1","вариант2","вариант3","вариант4"], "correct_index": 0}, ...]. '
-        'Всегда делай ровно 4 варианта ответов и correct_index указывай как номер правильного варианта (0-3). '
-        'Не добавляй никакого текста до или после JSON.'
-    )
-
-    payload = {
-        'modelUri': f'gpt://{YANDEX_FOLDER_ID}/{YANDEX_GPT_MODEL}',
-        'completionOptions': {
-            'stream': False,
-            'temperature': 0.6,
-            'maxTokens': '2000',
-        },
-        'messages': [
-            {'role': 'system', 'text': system_text},
-            {'role': 'user', 'text': user_text},
-        ],
-    }
-
-    try:
-        resp = requests.post(
-            YANDEX_GPT_API_URL,
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {YANDEX_IAM_TOKEN}',
-                'x-folder-id': YANDEX_FOLDER_ID,
-            },
-            json=payload,
-            timeout=20,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        text = (
-            data.get('result', {})
-            .get('alternatives', [{}])[0]
-            .get('message', {})
-            .get('text', '')
-        )
-        if not text:
-            return None
-
-        raw = json.loads(text)
-        questions = []
-        for item in raw:
-            q_text = str(item.get('text', '')).strip()
-            options = item.get('options') or []
-            if not q_text or not isinstance(options, list) or len(options) < 2:
-                continue
-            # берём первые 4 варианта
-            options = [str(o) for o in options][:4]
-            if len(options) < 2:
-                continue
-            idx = item.get('correct_index', 0)
-            try:
-                idx = int(idx)
-            except (TypeError, ValueError):
-                idx = 0
-            if idx < 0 or idx >= len(options):
-                idx = 0
-            questions.append({
-                'text': q_text,
-                'options': options,
-                'correct_index': idx,
-            })
-        return questions or None
-    except Exception:
-        return None
-
-
-def generate_questions(count, topic, difficulty):
-    """Генерация списка вопросов с попыткой использовать YandexGPT."""
-    # сначала пытаемся через YandexGPT
-    questions = _generate_questions_via_yandex(count, topic, difficulty)
-    if questions:
-        return questions
-    # если не получилось — возвращаем локальные заглушки
-    return _generate_questions_fallback(count, topic, difficulty)
 
 
 def get_room_by_code(code):
@@ -225,8 +150,6 @@ def handle_update_team_name(data):
     room = get_room_by_code(code)
     if not room or team not in ('team1', 'team2') or not name:
         return
-
-    # только ведущий может менять названия команд
     if request.sid != room['host_sid']:
         return
 
@@ -254,6 +177,11 @@ def handle_start_game(data):
     room['questions'] = generate_questions(
         room['questions_count'], room['topic'], room['difficulty']
     )
+    
+    if not room['questions']:
+        emit('error', {'message': 'Не удалось сгенерировать вопросы. Попробуйте еще раз.'})
+        return
+    
     room['state'] = 'playing'
     room['current_question_index'] = 0
     room['scores'] = {'team1': 0, 'team2': 0}
@@ -322,18 +250,31 @@ def handle_submit_answer(data):
 @socketio.on('disconnect')
 def handle_disconnect():
     for code, room in list(ROOMS.items()):
+        players_to_remove = []
         for i, p in enumerate(room['players']):
             if p['sid'] == request.sid:
-                room['players'].pop(i)
-                emit('player_joined', {'players': get_players_list(room)}, room=code)
-                if not room['players']:
-                    del ROOMS[code]
-                break
+                players_to_remove.append(i)
+        for i in reversed(players_to_remove):
+            room['players'].pop(i)
+        
+        if players_to_remove:
+            emit('player_joined', {'players': get_players_list(room)}, room=code)
+        if not room['players']:
+            del ROOMS[code]
+        elif room.get('host_sid') == request.sid and room['players']:
+            room['host_sid'] = room['players'][0]['sid']
 
 
 @app.route('/')
 def index():
     return render_template('sheet.html')
+
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    static_dir = os.path.join(base_dir, 'static')
+    return send_file(os.path.join(static_dir, filename))
 
 
 @app.route('/action.js')
