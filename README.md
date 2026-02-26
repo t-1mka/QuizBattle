@@ -4,5 +4,6 @@ QuizBattle - веб-приложение, представляющее собо�
 🆕Working to add AI🆕
 
 ⚙️Stack⚙️
+
 Backend: Python, Flask, SocketIO
 Frontend: Html, Css, JS
