@@ -1,7 +1,6 @@
 import os
 import random
 import string
-import json
 from flask import Flask, render_template, request, send_file
 from flask_socketio import SocketIO, emit, join_room
 from dotenv import load_dotenv
@@ -23,20 +22,8 @@ def gen_room_code():
             return code
 
 
-def generate_questions(count, topic, difficulty):
-    """Генерация списка вопросов локально."""
-    print(f"=== Generating {count} questions for topic '{topic}' with difficulty '{difficulty}' ===")
-    
-    questions = _generate_questions_fallback(count, topic, difficulty)
-    print(f"=== Successfully generated {len(questions)} questions locally ===")
-    return questions
 
-
-def _generate_questions_fallback(count, topic, difficulty):
-    """Локальный генератор вопросов."""
-    print(f"=== Using local generator for {count} questions ===")
-    print(f"Topic: {topic}, Difficulty: {difficulty}")
-    
+def create_questions(count, topic, difficulty):
     questions = []
     for i in range(count):
         options = ['Вариант A', 'Вариант B', 'Вариант C', 'Вариант D']
@@ -45,34 +32,28 @@ def _generate_questions_fallback(count, topic, difficulty):
         random.shuffle(options)
         correct_index = options.index(correct_answer)
         questions.append({
-            'text': f'Вопрос {i + 1}: тема «{topic}» (сложность: {difficulty})?',
+            'text': f'Вопрос {i + 1}',
             'options': options,
             'correct_index': correct_index,
         })
-        
-        print(f"=== Question {i+1} ===")
-        print(f"Text: {questions[-1]['text']}")
-        print(f"Options: {options}")
-        print(f"Correct index: {correct_index} ({options[correct_index]})")
-    
-    print(f"=== Generated {len(questions)} questions ===")
     return questions
 
 
 def get_room_by_code(code):
     return ROOMS.get(code.upper() if code else '')
 
-
 def get_players_list(room):
     return [{'sid': p['sid'], 'name': p['name'], 'team': p['team']} for p in room['players']]
-
 
 @socketio.on('create_room')
 def handle_create_room(data):
     name = (data.get('player_name') or '').strip() or 'Игрок'
     questions_count = min(50, max(1, int(data.get('questions_count', 5))))
     difficulty = data.get('difficulty', 'normal')
-    topic = (data.get('topic') or '').strip() or 'Общие знания'
+    try:
+        topic = (data.get('topic') or '').strip()
+        if topic == '':
+            return emit('error', {'message': "Тема не задана"})
 
     code = gen_room_code()
     room = {
@@ -107,22 +88,12 @@ def handle_create_room(data):
     )
     emit('player_joined', {'players': get_players_list(room)}, room=code)
 
-
 @socketio.on('join_room')
 def handle_join_room(data):
     code = (data.get('room_code') or '').strip().upper()
     name = (data.get('player_name') or '').strip() or 'Игрок'
 
     room = get_room_by_code(code)
-    if not room:
-        emit('error', {'message': 'Комната не найдена'})
-        return
-    if room['state'] != 'waiting':
-        emit('error', {'message': 'Игра уже началась'})
-        return
-    if any(p['sid'] == request.sid for p in room['players']):
-        emit('error', {'message': 'Вы уже в комнате'})
-        return
 
     join_room(code)
     team = 'team2' if len(room['players']) % 2 == 1 else 'team1'
@@ -155,7 +126,6 @@ def handle_update_team_name(data):
 
     room['team_names'][team] = name[:50]
     emit('team_name_updated', {'team_names': room['team_names']}, room=code)
-
 
 @socketio.on('start_game')
 def handle_start_game(data):
@@ -199,7 +169,6 @@ def handle_start_game(data):
     }
     emit('game_started', payload, room=code)
 
-
 @socketio.on('submit_answer')
 def handle_submit_answer(data):
     code = (data.get('room_code') or '').strip().upper()
@@ -207,14 +176,6 @@ def handle_submit_answer(data):
     room = get_room_by_code(code)
     if not room or room['state'] != 'playing':
         emit('error', {'message': 'Игра не идёт'})
-        return
-
-    player = next((p for p in room['players'] if p['sid'] == request.sid), None)
-    if not player:
-        emit('error', {'message': 'Вы не в этой комнате'})
-        return
-    if player['team'] != room['turn']:
-        emit('error', {'message': 'Сейчас ход другой команды'})
         return
 
     q = room['questions'][room['current_question_index']]
@@ -246,7 +207,6 @@ def handle_submit_answer(data):
     }
     emit('answer_result', payload, room=code)
 
-
 @socketio.on('disconnect')
 def handle_disconnect():
     for code, room in list(ROOMS.items()):
@@ -264,18 +224,15 @@ def handle_disconnect():
         elif room.get('host_sid') == request.sid and room['players']:
             room['host_sid'] = room['players'][0]['sid']
 
-
 @app.route('/')
 def index():
     return render_template('sheet.html')
-
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     static_dir = os.path.join(base_dir, 'static')
     return send_file(os.path.join(static_dir, filename))
-
 
 @app.route('/action.js')
 def serve_action_js():
@@ -285,7 +242,6 @@ def serve_action_js():
         if os.path.exists(path):
             return send_file(path, mimetype='application/javascript')
     return ('Not Found', 404)
-
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000)
