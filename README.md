@@ -1,5 +1,4 @@
-⚔️#QuizBattle⚔️
-
+#QuizBattle
 
 QuizBattle - веб-приложение, представляющее собой викторину.
 
