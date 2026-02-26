@@ -460,6 +460,20 @@ main {
     opacity: 0.6;
 }
 
+.game-option.correct {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+    opacity: 1;
+}
+
+.game-option.incorrect {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+    opacity: 1;
+}
+
 .game-wait {
     text-align: center;
     color: rgba(255, 255, 255, 0.7);

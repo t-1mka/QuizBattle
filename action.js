@@ -263,30 +263,45 @@ function onAnswerResult(data) {
     setTurn(data.turn);
     gameQuestionNumEl.textContent = `Вопрос ${data.question_number} из ${data.total_questions}`;
 
-    if (data.game_over) {
-        gameQuestionTextEl.textContent = '';
-        gameOptionsEl.innerHTML = '';
-        gameWaitEl.classList.add('hidden');
-        const s1 = data.scores && data.scores.team1 != null ? data.scores.team1 : 0;
-        const s2 = data.scores && data.scores.team2 != null ? data.scores.team2 : 0;
-        const t1 = teamNames.team1 || 'Команда 1';
-        const t2 = teamNames.team2 || 'Команда 2';
-        let text = `${t1}: ${s1} — ${t2}: ${s2}. `;
-        if (s1 > s2) text += `${t1} побеждает!`;
-        else if (s2 > s1) text += `${t2} побеждает!`;
-        else text += 'Ничья!';
-        gameOverResultEl.textContent = text;
-        gameOverEl.classList.add('visible');
-        return;
-    }
+    const buttons = gameOptionsEl.querySelectorAll('.game-option');
+    buttons.forEach((btn, index) => {
+        if (index === data.correct_index) {
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('incorrect');
+        }
+    });
 
-    gameQuestionTextEl.textContent = data.next_question ? data.next_question.text : '';
-    const canAnswer = myTeam === data.turn;
-    if (data.next_question) {
-        renderOptions(data.next_question.options, canAnswer);
-    }
-    gameWaitEl.classList.toggle('hidden', canAnswer);
-    gameOptionsEl.classList.toggle('disabled', !canAnswer);
+    gameWaitEl.classList.add('hidden');
+
+    setTimeout(() => {
+        if (data.game_over) {
+            gameQuestionTextEl.textContent = '';
+            gameOptionsEl.innerHTML = '';
+            gameWaitEl.classList.add('hidden');
+            const s1 = data.scores && data.scores.team1 != null ? data.scores.team1 : 0;
+            const s2 = data.scores && data.scores.team2 != null ? data.scores.team2 : 0;
+            const t1 = teamNames.team1 || 'Команда 1';
+            const t2 = teamNames.team2 || 'Команда 2';
+            let text = `${t1}: ${s1} — ${t2}: ${s2}. `;
+            if (s1 > s2) text += `${t1} побеждает!`;
+            else if (s2 > s1) text += `${t2} побеждает!`;
+            else text += 'Ничья!';
+            gameOverResultEl.textContent = text;
+            gameOverEl.classList.add('visible');
+            return;
+        }
+
+        gameQuestionTextEl.textContent = data.next_question ? data.next_question.text : '';
+        const canAnswer = myTeam === data.turn;
+        if (data.next_question) {
+            renderOptions(data.next_question.options, canAnswer);
+        } else {
+            gameOptionsEl.innerHTML = '';
+        }
+
+        gameWaitEl.classList.toggle('hidden', canAnswer);
+    }, 2000);
 }
 
 function onTeamNameUpdated(data) {

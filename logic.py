@@ -1,6 +1,11 @@
 import os
 import random
 import string
+import json
+import re
+import hashlib
+import time
+import requests
 from flask import Flask, render_template, request, send_file
 from flask_socketio import SocketIO, emit, join_room
 from dotenv import load_dotenv
@@ -9,7 +14,11 @@ load_dotenv()
 
 app = Flask(__name__, template_folder='template')
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'quiz-battle-secret-' + os.urandom(16).hex())
-socketio = SocketIO(app, cors_allowed_origins='*')
+socketio = SocketIO(app, cors_allowed_origins='*', async_mode='eventlet', ping_timeout=60, ping_interval=25)
+
+GIGACHAT_URL = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+GIGACHAT_TOKEN = os.getenv('GIGACHAT_TOKEN')
+CACHE = {}
 
 ROOMS = {}
 
@@ -21,9 +30,99 @@ def gen_room_code():
         if code not in ROOMS:
             return code
 
+def generate_questions_via_gigachat(count, topic, difficulty):
+    if not GIGACHAT_TOKEN:
+        return None
+    
+    cache_key = hashlib.md5(f"{count}_{topic}_{difficulty}".encode()).hexdigest()
+    
+    if cache_key in CACHE and time.time() - CACHE[cache_key]['time'] < 3600:
+        return CACHE[cache_key]['questions']
+    
+    headers = {
+        'Authorization': f'Bearer {GIGACHAT_TOKEN}',
+        'Content-Type': 'application/json'
+    }
+    
+    prompt = f"""
+    Сгенерируй {count} вопросов по теме "{topic}" со сложностью "{difficulty}".
+    
+    Формат ответа - JSON массив:
+    [
+        {{
+            "text": "вопрос",
+            "options": ["вариант1", "вариант2", "вариант3", "вариант4"],
+            "correct_index": 0
+        }}
+    ]
+    
+    Требования:
+    - Только JSON без комментариев
+    - 4 варианта ответа
+    - correct_index от 0 до 3
+    - Вопросы на русском языке
+    """
+    
+    payload = {
+        'model': 'GigaChat',
+        'messages': [{'role': 'user', 'content': prompt}],
+        'temperature': 0.7,
+        'max_tokens': 2000
+    }
+    
+    try:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        response = requests.post(
+            GIGACHAT_URL, 
+            headers=headers, 
+            json=payload, 
+            timeout=30,
+            verify=False
+        )
+        response.raise_for_status()
+        
+        result = response.json()
+        content = result['choices'][0]['message']['content']
+        
+        json_match = re.search(r'\[.*\]', content, re.DOTALL)
+        if json_match:
+            content = json_match.group(0)
+        
+        questions = json.loads(content)
+        
+        valid_questions = []
+        for q in questions:
+            if (isinstance(q, dict) and 
+                'text' in q and 
+                'options' in q and 
+                len(q['options']) == 4 and
+                'correct_index' in q):
+                valid_questions.append(q)
+        
+        if valid_questions:
+            CACHE[cache_key] = {
+                'questions': valid_questions,
+                'time': time.time()
+            }
+        
+        return valid_questions
+        
+    except Exception as e:
+        ## только отладка print(f"GigaChat error: {e}")
+        return None
+
 
 
 def create_questions(count, topic, difficulty):
+    questions = generate_questions_via_gigachat(count, topic, difficulty)
+    if not questions:
+        questions = get_local_questions(count, topic, difficulty)
+    
+    return questions[:count]
+
+def get_local_questions(count, topic, difficulty):
     questions_db = {
         'Математика': [
             {'text': 'Сколько будет 2 + 2?', 'options': ['3', '4', '5', '6'], 'correct_index': 1},
@@ -86,9 +185,17 @@ def create_questions(count, topic, difficulty):
     selected_questions = []
     all_topics = list(questions_db.keys())
     
+    topic_lower = topic.lower()
+    matched_topic = None
+    
+    for db_topic in all_topics:
+        if topic_lower == db_topic.lower():
+            matched_topic = db_topic
+            break
+    
     for i in range(count):
-        if topic in questions_db:
-            topic_questions = questions_db[topic]
+        if matched_topic:
+            topic_questions = questions_db[matched_topic]
         else:
             topic_questions = []
             for t in all_topics:
@@ -109,10 +216,10 @@ def get_players_list(room):
 
 @socketio.on('create_room')
 def handle_create_room(data):
-    name = (data.get('player_name') or '').strip() or 'Игрок'
+    name = (data.get('player_name').strip())
     questions_count = min(50, max(1, int(data.get('questions_count', 5))))
     difficulty = data.get('difficulty', 'normal')
-    topic = (data.get('topic') or '').strip() or 'Школьная программа'
+    topic = (data.get('topic').strip())
 
     code = gen_room_code()
     room = {
@@ -264,7 +371,7 @@ def handle_submit_answer(data):
         next_q_num = room['current_question_index']
 
     payload = {
-        'correct': correct,
+        'correct_index': q['correct_index'],
         'scores': room['scores'],
         'turn': room['turn'],
         'next_question': next_question,
@@ -302,4 +409,4 @@ def serve_action_js():
     return send_file(os.path.join(base_dir, 'action.js'), mimetype='application/javascript')
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
