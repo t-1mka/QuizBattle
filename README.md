@@ -51,9 +51,6 @@ pip install -r requirements.txt
 
 ### 2. **Конфигурация**
 ```bash
-# Создайте .env файл из примера
-copy .env.example .env
-
 # Отредактируйте .env с вашими данными
 GIGACHAT_CREDENTIALS=ваш_ключ_авторизации
 FLASK_SECRET_KEY=ваш_секретный_ключ
