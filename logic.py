@@ -5,13 +5,10 @@ import json
 import re
 import hashlib
 import time
-import requests
-import threading
-import subprocess
-import sys
 from flask import Flask, render_template, request, send_file
 from flask_socketio import SocketIO, emit, join_room
 from dotenv import load_dotenv
+from gigachat import GigaChat
 
 load_dotenv()
 
@@ -20,7 +17,7 @@ app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'quiz-battle-secret-' +
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='eventlet', ping_timeout=60, ping_interval=25)
 
 GIGACHAT_URL = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
-GIGACHAT_TOKEN = os.getenv('GIGACHAT_TOKEN')
+GIGACHAT_TOKEN = os.getenv('GIGACHAT_CREDENTIALS')
 CACHE = {}
 
 ROOMS = {}
@@ -34,86 +31,81 @@ def gen_room_code():
             return code
 
 def generate_questions_via_gigachat(count, topic, difficulty):
-    if not GIGACHAT_TOKEN:
+    credentials = os.getenv('GIGACHAT_CREDENTIALS')
+    if not credentials:
+        print("❌ GIGACHAT_CREDENTIALS не найдены")
         return None
+    else:
+        print(f"✅ GIGACHAT_CREDENTIALS найдены")
     
     cache_key = hashlib.md5(f"{count}_{topic}_{difficulty}".encode()).hexdigest()
     
     if cache_key in CACHE and time.time() - CACHE[cache_key]['time'] < 3600:
         return CACHE[cache_key]['questions']
     
-    headers = {
-        'Authorization': f'Bearer {GIGACHAT_TOKEN}',
-        'Content-Type': 'application/json'
-    }
-    
-    prompt = f"""
-    Сгенерируй {count} вопросов по теме "{topic}" со сложностью "{difficulty}".
-    
-    Формат ответа - JSON массив:
-    [
-        {{
-            "text": "вопрос",
-            "options": ["вариант1", "вариант2", "вариант3", "вариант4"],
-            "correct_index": 0
-        }}
-    ]
-    
-    Требования:
-    - Только JSON без комментариев
-    - 4 варианта ответа
-    - correct_index от 0 до 3
-    - Вопросы на русском языке
-    """
-    
-    payload = {
-        'model': 'GigaChat',
-        'messages': [{'role': 'user', 'content': prompt}],
-        'temperature': 0.6,
-        'max_tokens': 2000
-    }
-    
     try:
-        import urllib3
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        
-        response = requests.post(
-            GIGACHAT_URL, 
-            headers=headers, 
-            json=payload, 
-            timeout=30,
-            verify=False
-        )
-        response.raise_for_status()
-        
-        result = response.json()
-        content = result['choices'][0]['message']['content']
-        
-        json_match = re.search(r'\[.*\]', content, re.DOTALL)
-        if json_match:
-            content = json_match.group(0)
-        
-        questions = json.loads(content)
-        
-        valid_questions = []
-        for q in questions:
-            if (isinstance(q, dict) and 
-                'text' in q and 
-                'options' in q and 
-                len(q['options']) == 4 and
-                'correct_index' in q):
-                valid_questions.append(q)
-        
-        if valid_questions:
-            CACHE[cache_key] = {
-                'questions': valid_questions,
-                'time': time.time()
-            }
-        
-        return valid_questions
-        
+        with GigaChat(credentials=credentials, verify_ssl_certs=False) as giga:
+            prompt = f"""
+            Ты - профессиональный составитель викторин. Создай {count} вопросов по теме "{topic}" 
+            со сложностью "{difficulty}".
+            
+            Формат ответа - ТОЛЬКО валидный JSON массив объектов:
+            [
+                {{
+                    "text": "Вопрос",
+                    "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
+                    "correct_index": 0
+                }}
+            ]
+            
+            Требования:
+            - Вопросы должны быть интересными и разнообразными
+            - Все варианты правдоподобные
+            - correct_index от 0 до 3 (индекс правильного ответа)
+            - Без дополнительного текста, только JSON
+            - Тема: {topic}
+            - Сложность: {difficulty} (легко - общеизвестные факты, нормально - средние знания, сложно - специфические знания)
+            
+            Пример для темы "Программирование", сложность "нормально":
+            [{{"text": "Какой язык программирования создал Гвидо ван Россум?", "options": ["Python", "Java", "C++", "JavaScript"], "correct_index": 0}}]
+            """
+
+            response = giga.chat(prompt)
+            content = response.choices[0].message.content.strip()
+            
+            content = content.replace('```json', '').replace('```', '').strip()
+            
+            try:
+                questions = json.loads(content)
+            except json.JSONDecodeError:
+                json_match = re.search(r'\[.*\]', content, re.DOTALL)
+                if json_match:
+                    questions = json.loads(json_match.group())
+                else:
+                    return None
+            
+            valid_questions = []
+            for q in questions:
+                if (isinstance(q, dict) and 
+                    'text' in q and 
+                    'options' in q and 
+                    len(q['options']) == 4 and
+                    'correct_index' in q and
+                    isinstance(q['correct_index'], int) and
+                    0 <= q['correct_index'] <= 3):
+                    valid_questions.append(q)
+            
+            if valid_questions:
+                CACHE[cache_key] = {
+                    'questions': valid_questions,
+                    'time': time.time()
+                }
+                return valid_questions
+            
+            return None
+            
     except Exception as e:
-        #only for debug print(f"GigaChat error: {e}")
+        print(f"❌ Ошибка GigaChat: {e}")
         return None
 
 
@@ -416,29 +408,23 @@ if __name__ == '__main__':
         try:
             import socket
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
+            s.connect(("10.255.255.255", 1))
             ip = s.getsockname()[0]
             s.close()
             return ip
         except:
-            return None
+            try:
+                hostname = socket.gethostname()
+                return socket.gethostbyname(hostname)
+            except:
+                return None
     
-    def start_token_manager():
-        time.sleep(2) 
-        try:
-            subprocess.run([sys.executable, "get_token.py"], check=True)
-        except:
-            pass
-    
+    port_ = 5000
     local_ip = get_local_ip()
     
     print("🎮 Запуск сервера викторины...")
     print("📱 Адреса для подключения:")
-    print(f"   - Локальный: http://localhost:5000")
-    print(f"   - Мобильный: http://{local_ip}:5000")
-    print()
+    print(f"   - Локальный: http://localhost:{port_}")
+    print(f"   - Мобильный: http://{local_ip}:{port_}")
     
-    token_thread = threading.Thread(target=start_token_manager, daemon=True)
-    token_thread.start()
-    
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    socketio.run(app, host='0.0.0.0', port=port_, debug=False)

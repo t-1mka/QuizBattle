@@ -134,8 +134,8 @@ if (team2NameInput) {
 }
 
 joinBtn.addEventListener('click', () => {
-    const code = roomCodeInput ? roomCodeInput.value.trim().toUpperCase() : '';
-    const playerName = joinPlayerNameInput ? joinPlayerNameInput.value.trim() || 'Игрок' : 'Игрок';
+    const code = roomCodeInput.value.trim().toUpperCase();
+    const playerName = joinPlayerNameInput.value.trim() || 'Игрок';
     if (!code) {
         alert('Введите код комнаты');
         return;
@@ -308,8 +308,6 @@ function onTeamNameUpdated(data) {
     if (data.team_names) {
         teamNames = data.team_names;
         applyTeamNamesToUI();
-        if (playersList && playersList.children.length > 0) {
-        }
     }
 }
 
