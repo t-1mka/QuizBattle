@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrainStorm — Викторина</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Russo+One&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <!-- Тосты -->
+  <div id="toasts" class="toasts"></div>
+
+  <!-- ══════════════════════════════════════════
+       ГЛАВНЫЙ ЭКРАН
+  ══════════════════════════════════════════ -->
+  <div id="view-main" class="view active">
+    <div class="hero">
+      <div class="hero-logo">🧠 BrainStorm</div>
+      <div class="hero-sub">Викторина с искусственным интеллектом</div>
+    </div>
+
+    <!-- Переключатель вкладок -->
+    <div class="tab-switcher">
+      <button class="tab-btn active" data-tab="create">✨ Создать лобби</button>
+      <button class="tab-btn" data-tab="join">🚀 Присоединиться</button>
+    </div>
+
+    <!-- Вкладка: Создать лобби -->
+    <div id="tab-create" class="tab-panel active card">
+      <h2 class="card-title">Создать новое лобби</h2>
+      <p class="card-hint">Введите имя — станете хостом и сможете настроить игру</p>
+      <label class="field-label" for="create-name">Ваше имя</label>
+      <input id="create-name" class="inp" type="text"
+             placeholder="Например: Алекс" maxlength="20" autocomplete="off">
+      <div id="create-name-error" class="field-error" style="display:none">⚠️ Введите имя</div>
+      <button id="btn-create" class="btn btn-primary btn-full mt-12">
+        ✨ Создать лобби
+      </button>
+    </div>
+
+    <!-- Вкладка: Присоединиться -->
+    <div id="tab-join" class="tab-panel card" style="display:none">
+      <h2 class="card-title">Войти в игру</h2>
+      <p class="card-hint">Введите имя и код комнаты от хоста</p>
+      <label class="field-label" for="join-name">Ваше имя</label>
+      <input id="join-name" class="inp" type="text"
+             placeholder="Например: Катя" maxlength="20" autocomplete="off">
+      <label class="field-label mt-12" for="join-code">Код комнаты</label>
+      <input id="join-code" class="inp mt-8" type="text"
+             placeholder="ABCDEF" maxlength="6" autocomplete="off"
+             style="text-transform:uppercase; letter-spacing: 4px; font-family: 'JetBrains Mono', monospace;">
+      <div id="join-error" class="field-error" style="display:none">⚠️ Введите имя и код</div>
+      <button id="btn-join" class="btn btn-primary btn-full mt-12">
+        🚀 Войти в игру
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ЛОББИ
+  ══════════════════════════════════════════ -->
+  <div id="view-lobby" class="view">
+    <div class="lobby-top">
+      <div class="hero-logo" style="font-size:2rem">🧠 BrainStorm</div>
+      <div class="code-block mt-8">
+        <span class="code-lbl">Код комнаты:</span>
+        <span id="lobby-code" class="code-val">------</span>
+        <button id="btn-copy" class="btn-icon" title="Скопировать">📋</button>
+      </div>
+    </div>
+
+    <!-- Список игроков -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h3>👥 Игроки <span id="players-count">(0)</span></h3>
+      </div>
+      <ul id="players-list" class="players-list"></ul>
+    </div>
+
+    <!-- Настройки для ХОСТА -->
+    <div id="host-settings" class="card" style="display:none">
+      <h3 style="margin-bottom:16px">⚙️ Настройки игры</h3>
+      <label class="field-label" for="s-topic">Тема викторины</label>
+      <input id="s-topic" class="inp" type="text"
+             placeholder="Майнкрафт, история России, поп-музыка..." value="Общие знания">
+      <div class="grid-2 mt-12">
+        <div>
+          <label class="field-label" for="s-count">Вопросов</label>
+          <select id="s-count" class="inp">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="s-diff">Сложность</label>
+          <select id="s-diff" class="inp">
+            <option value="easy">😊 Лёгкая</option>
+            <option value="medium" selected>🧠 Средняя</option>
+            <option value="hard">🔥 Сложная</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="s-options">Вариантов ответа</label>
+          <select id="s-options" class="inp">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="s-mode">Режим игры</label>
+          <select id="s-mode" class="inp">
+            <option value="classic" selected>🏆 Классика</option>
+            <option value="ffa">⚡ Все против всех</option>
+            <option value="team">🤝 Командный</option>
+          </select>
+        </div>
+      </div>
+      <div id="mode-desc" class="mode-desc mt-8">
+        🏆 <b>Классика</b> — все отвечают одновременно, очки за скорость.
+      </div>
+      <button id="btn-apply" class="btn btn-secondary btn-full mt-12">
+        💾 Применить настройки
+      </button>
+    </div>
+
+    <!-- Настройки для ГОСТЯ (только просмотр, обновляется живьём) -->
+    <div id="guest-settings" class="card" style="display:none">
+      <h3 style="margin-bottom:12px">📋 Настройки игры</h3>
+      <div id="guest-settings-display" class="guest-settings-grid">
+        <div class="gs-item">
+          <span class="gs-icon">🎯</span>
+          <span class="gs-label">Тема</span>
+          <span id="gs-topic" class="gs-value">—</span>
+        </div>
+        <div class="gs-item">
+          <span class="gs-icon">❓</span>
+          <span class="gs-label">Вопросов</span>
+          <span id="gs-count" class="gs-value">—</span>
+        </div>
+        <div class="gs-item">
+          <span class="gs-icon">⚡</span>
+          <span class="gs-label">Сложность</span>
+          <span id="gs-diff" class="gs-value">—</span>
+        </div>
+        <div class="gs-item">
+          <span class="gs-icon">🎮</span>
+          <span class="gs-label">Режим</span>
+          <span id="gs-mode" class="gs-value">—</span>
+        </div>
+      </div>
+      <div id="wait-hint" class="wait-hint mt-12">
+        ⏳ Ожидаем старта от хоста...
+      </div>
+    </div>
+
+    <div class="lobby-footer">
+      <button id="btn-start" class="btn btn-primary" style="display:none">
+        🎮 Начать игру
+      </button>
+      <button id="btn-leave-lobby" class="btn btn-ghost" style="display:none">
+        ← Выйти
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ЗАГРУЗКА
+  ══════════════════════════════════════════ -->
+  <div id="view-loading" class="view">
+    <div style="text-align:center;padding:60px 20px">
+      <div class="hero-logo">🧠 BrainStorm</div>
+      <div class="loading-spinner mt-20"></div>
+      <p id="loading-msg" class="mt-20" style="color:#a0a8c0;font-size:1.2rem">
+        🤖 GigaChat генерирует вопросы...
+      </p>
+      <p style="color:#5a6280;font-size:0.9rem;margin-top:8px">
+        Обычно занимает 5–15 секунд
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ИГРОВОЙ ЭКРАН
+  ══════════════════════════════════════════ -->
+  <div id="view-game" class="view">
+
+    <!-- Шапка -->
+    <div class="game-header">
+      <div class="progress-wrap">
+        <span id="g-qnum" class="g-qnum">Вопрос 0 / 0</span>
+        <div class="progress-track">
+          <div id="g-progress" class="progress-fill"></div>
+        </div>
+      </div>
+      <div id="g-timer" class="g-timer">30</div>
+      <button id="btn-leave-game" class="exit-btn btn" title="Выйти из игры">✕</button>
+    </div>
+
+    <!-- Командная таблица -->
+    <div id="team-board" class="team-board" style="display:none">
+      <div class="tb-cell">
+        <span class="tb-name team-1-color">Команда 1</span>
+        <span id="tb-s1" class="tb-score">0</span>
+      </div>
+      <span class="tb-vs">VS</span>
+      <div class="tb-cell">
+        <span class="tb-name team-2-color">Команда 2</span>
+        <span id="tb-s2" class="tb-score">0</span>
+      </div>
+    </div>
+
+    <!-- Мои очки и бейджи -->
+    <div class="score-row">
+      <span class="score-lbl">Очки:</span>
+      <span id="g-score" class="score-val">0</span>
+      <span id="g-mode-badge" class="mode-badge"></span>
+      <span id="g-team" class="diff-badge" style="display:none"></span>
+    </div>
+
+    <!-- Вопрос -->
+    <div class="question-card">
+      <p id="g-question" class="question-text">Загрузка вопроса...</p>
+    </div>
+
+    <!-- Варианты ответов -->
+    <div id="options-grid" class="options-grid"></div>
+
+    <!-- FFA флэш -->
+    <div id="ffa-flash" class="ffa-flash" style="display:none"></div>
+
+    <!-- Ход команды -->
+    <div id="turn-bar" class="turn-bar" style="display:none"></div>
+
+    <!-- Статус -->
+    <p id="g-status" class="g-status"></p>
+
+    <!-- Панель результата вопроса -->
+    <div id="question-result-panel" class="result-panel" style="display:none">
+      <div id="result-title" class="result-title">✅ Правильно!</div>
+      <div id="qr-scores" class="qr-scores"></div>
+      <p class="qr-next-hint">Следующий вопрос через несколько секунд...</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       РЕЗУЛЬТАТЫ
+  ══════════════════════════════════════════ -->
+  <div id="view-results" class="view">
+    <div id="result-banner" class="result-banner" style="display:none"></div>
+    <h1 class="results-h">🏆 Итоги игры</h1>
+    <div id="leaderboard" class="leaderboard"></div>
+    <div style="text-align:center">
+      <button id="btn-again" class="btn btn-primary">🔄 На главную</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/static/js/game.js"></script>
+</body>
+</html>
