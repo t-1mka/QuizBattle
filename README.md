@@ -58,8 +58,7 @@ pip install -r requirements.txt
 ```
 3. Можно играть:
 ```bash
-Запуск.sh (Linux)
-start.bat (Windows)
+start.bat
 ```
 
 ## 2. **Конфигурация**
