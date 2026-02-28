@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Игровая логика BrainStorm — classic | ffa | team"""
 import random, string, time
 from dataclasses import dataclass, field
 from typing import Optional
@@ -9,7 +7,6 @@ BASE_SCORE   = 100
 TIME_BONUS   = 50
 MAX_TIME     = 30.0
 
-# ── Кэш вопросов (1 час TTL) ─────────────────────────────────
 _CACHE: dict = {}
 CACHE_TTL = 3600
 
@@ -23,8 +20,6 @@ def cache_get(key):
 
 def cache_set(key, questions):
     _CACHE[key] = (time.time(), questions)
-
-# ── Player ───────────────────────────────────────────────────
 
 @dataclass
 class Player:
@@ -49,8 +44,6 @@ class Player:
             "team": self.team, "is_host": is_host,
             "total_correct": self.total_correct,
         }
-
-# ── Room ─────────────────────────────────────────────────────
 
 @dataclass
 class Room:
@@ -159,8 +152,6 @@ class Room:
             out["team_scores"] = ts
             out["winner"] = "team1" if ts[1] > ts[2] else "team2" if ts[2] > ts[1] else "draw"
         return out
-
-# ── Registry ─────────────────────────────────────────────────
 
 rooms: dict[str, Room] = {}
 

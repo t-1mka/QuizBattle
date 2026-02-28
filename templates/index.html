@@ -12,25 +12,19 @@
   <div class="bg-grid"></div>
   <div class="bg-glow"></div>
 
-  <!-- Тосты -->
   <div id="toasts" class="toasts"></div>
 
-  <!-- ══════════════════════════════════════════
-       ГЛАВНЫЙ ЭКРАН
-  ══════════════════════════════════════════ -->
   <div id="view-main" class="view active">
     <div class="hero">
-      <div class="hero-logo">🧠 BrainStorm</div>
+      <div class="hero-logo">🧠 Мозговой Штурм</div>
       <div class="hero-sub">Викторина с искусственным интеллектом</div>
     </div>
 
-    <!-- Переключатель вкладок -->
     <div class="tab-switcher">
       <button class="tab-btn active" data-tab="create">✨ Создать лобби</button>
       <button class="tab-btn" data-tab="join">🚀 Присоединиться</button>
     </div>
 
-    <!-- Вкладка: Создать лобби -->
     <div id="tab-create" class="tab-panel active card">
       <h2 class="card-title">Создать новое лобби</h2>
       <p class="card-hint">Введите имя — станете хостом и сможете настроить игру</p>
@@ -43,7 +37,6 @@
       </button>
     </div>
 
-    <!-- Вкладка: Присоединиться -->
     <div id="tab-join" class="tab-panel card" style="display:none">
       <h2 class="card-title">Войти в игру</h2>
       <p class="card-hint">Введите имя и код комнаты от хоста</p>
@@ -61,9 +54,6 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       ЛОББИ
-  ══════════════════════════════════════════ -->
   <div id="view-lobby" class="view">
     <div class="lobby-top">
       <div class="hero-logo" style="font-size:2rem">🧠 BrainStorm</div>
@@ -74,7 +64,6 @@
       </div>
     </div>
 
-    <!-- Список игроков -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <h3>👥 Игроки <span id="players-count">(0)</span></h3>
@@ -82,7 +71,6 @@
       <ul id="players-list" class="players-list"></ul>
     </div>
 
-    <!-- Настройки для ХОСТА -->
     <div id="host-settings" class="card" style="display:none">
       <h3 style="margin-bottom:16px">⚙️ Настройки игры</h3>
       <label class="field-label" for="s-topic">Тема викторины</label>
@@ -132,7 +120,6 @@
       </button>
     </div>
 
-    <!-- Настройки для ГОСТЯ (только просмотр, обновляется живьём) -->
     <div id="guest-settings" class="card" style="display:none">
       <h3 style="margin-bottom:12px">📋 Настройки игры</h3>
       <div id="guest-settings-display" class="guest-settings-grid">
@@ -172,9 +159,6 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       ЗАГРУЗКА
-  ══════════════════════════════════════════ -->
   <div id="view-loading" class="view">
     <div style="text-align:center;padding:60px 20px">
       <div class="hero-logo">🧠 BrainStorm</div>
@@ -188,12 +172,8 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       ИГРОВОЙ ЭКРАН
-  ══════════════════════════════════════════ -->
   <div id="view-game" class="view">
 
-    <!-- Шапка -->
     <div class="game-header">
       <div class="progress-wrap">
         <span id="g-qnum" class="g-qnum">Вопрос 0 / 0</span>
@@ -205,7 +185,6 @@
       <button id="btn-leave-game" class="exit-btn btn" title="Выйти из игры">✕</button>
     </div>
 
-    <!-- Командная таблица -->
     <div id="team-board" class="team-board" style="display:none">
       <div class="tb-cell">
         <span class="tb-name team-1-color">Команда 1</span>
@@ -218,7 +197,6 @@
       </div>
     </div>
 
-    <!-- Мои очки и бейджи -->
     <div class="score-row">
       <span class="score-lbl">Очки:</span>
       <span id="g-score" class="score-val">0</span>
@@ -226,24 +204,18 @@
       <span id="g-team" class="diff-badge" style="display:none"></span>
     </div>
 
-    <!-- Вопрос -->
     <div class="question-card">
       <p id="g-question" class="question-text">Загрузка вопроса...</p>
     </div>
 
-    <!-- Варианты ответов -->
     <div id="options-grid" class="options-grid"></div>
 
-    <!-- FFA флэш -->
     <div id="ffa-flash" class="ffa-flash" style="display:none"></div>
 
-    <!-- Ход команды -->
     <div id="turn-bar" class="turn-bar" style="display:none"></div>
 
-    <!-- Статус -->
     <p id="g-status" class="g-status"></p>
 
-    <!-- Панель результата вопроса -->
     <div id="question-result-panel" class="result-panel" style="display:none">
       <div id="result-title" class="result-title">✅ Правильно!</div>
       <div id="qr-scores" class="qr-scores"></div>
@@ -251,9 +223,6 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       РЕЗУЛЬТАТЫ
-  ══════════════════════════════════════════ -->
   <div id="view-results" class="view">
     <div id="result-banner" class="result-banner" style="display:none"></div>
     <h1 class="results-h">🏆 Итоги игры</h1>

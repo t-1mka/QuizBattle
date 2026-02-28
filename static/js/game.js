@@ -1,18 +1,14 @@
-// BrainStorm — game.js
 const socket = io();
 let timerInterval = null;
 
-// ── DOM helper ───────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
-// ── Вид ─────────────────────────────────────────────────────
 function showView(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $(`view-${id}`)?.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── Тосты ───────────────────────────────────────────────────
 function toast(msg, type = 'info', ms = 3000) {
     const t = Object.assign(document.createElement('div'), {
         className: `toast toast-${type}`, innerHTML: msg
@@ -24,7 +20,6 @@ function toast(msg, type = 'info', ms = 3000) {
     }, ms);
 }
 
-// ── Таймер ───────────────────────────────────────────────────
 function startTimer(sec) {
     clearInterval(timerInterval);
     let left = sec;
@@ -48,7 +43,6 @@ function stopTimer() {
     if (el) el.style.animation = '';
 }
 
-// ── Игроки ───────────────────────────────────────────────────
 function renderPlayers(players) {
     const list = $('players-list');
     if (!list) return;
@@ -62,7 +56,6 @@ function renderPlayers(players) {
     $('players-count').textContent = `(${players.length})`;
 }
 
-// ── Настройки гостя ──────────────────────────────────────────
 const DIFF  = { easy:'😊 Лёгкая', medium:'🧠 Средняя', hard:'🔥 Сложная' };
 const MODES = { classic:'🏆 Классика', ffa:'⚡ Все против всех', team:'🤝 Командный' };
 
@@ -87,7 +80,6 @@ function renderGuestSettings(s) {
     }
 }
 
-// ── Описание режима (для хоста) ───────────────────────────────
 function updateModeDesc() {
     const descs = {
         classic: '🏆 <b>Классика</b> — все отвечают одновременно, очки за скорость.',
@@ -98,7 +90,6 @@ function updateModeDesc() {
     if (el) el.innerHTML = descs[$('s-mode')?.value] || '';
 }
 
-// ── Подсветка ответов ─────────────────────────────────────────
 function highlightAnswers(correctIdx, playerAnswers) {
     const myAns = playerAnswers[socket.id]?.answer ?? -1;
     document.querySelectorAll('.option-btn').forEach((btn, i) => {
@@ -109,7 +100,6 @@ function highlightAnswers(correctIdx, playerAnswers) {
     });
 }
 
-// ── Вкладки ───────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
@@ -118,7 +108,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
     $({ create: 'create-name', join: 'join-name' }[btn.dataset.tab])?.focus();
 }));
 
-// ── Создать лобби ─────────────────────────────────────────────
 function doCreate() {
     const el  = $('create-name');
     const err = $('create-name-error');
@@ -134,7 +123,6 @@ $('create-name')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') doCreate();
 });
 
-// ── Войти в игру ──────────────────────────────────────────────
 function doJoin() {
     const nameEl = $('join-name'), codeEl = $('join-code'), err = $('join-error');
     const name   = nameEl?.value.trim();
@@ -152,7 +140,6 @@ $('btn-join')?.addEventListener('click', doJoin);
 );
 $('join-code')?.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
 
-// ── Лобби ─────────────────────────────────────────────────────
 $('btn-apply')?.addEventListener('click', () => {
     socket.emit('update_settings', {
         topic:          $('s-topic')?.value || 'Общие знания',
@@ -174,8 +161,6 @@ function doLeave() { socket.emit('leave_room'); showView('main'); }
 $('btn-leave-lobby')?.addEventListener('click', doLeave);
 $('btn-leave-game')?.addEventListener('click', () => confirm('Выйти из игры?') && doLeave());
 $('btn-again')?.addEventListener('click',      () => showView('main'));
-
-// ── Socket события ────────────────────────────────────────────
 
 socket.on('room_created', data => {
     showView('lobby');

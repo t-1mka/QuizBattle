@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-"""AI-клиент BrainStorm — GigaChat с валидацией вопросов"""
 import os, re, json, random, logging
 
 logger = logging.getLogger(__name__)
@@ -9,8 +7,6 @@ DIFFICULTY_LABELS = {
     "medium": "СРЕДНИЙ — для эрудированного взрослого, требует кругозора",
     "hard":   "СЛОЖНЫЙ — экспертный уровень, глубокие специализированные знания",
 }
-
-# ── Промпт ───────────────────────────────────────────────────
 
 def build_prompt(topic: str, count: int, difficulty: str, num_options: int) -> str:
     diff_label = DIFFICULTY_LABELS.get(difficulty, DIFFICULTY_LABELS["medium"])
@@ -34,27 +30,20 @@ def build_prompt(topic: str, count: int, difficulty: str, num_options: int) -> s
         f'Создай {count} вопросов по теме "{topic}":'
     )
 
-# ── Парсинг ответа ───────────────────────────────────────────
-
 def _parse_response(raw: str, num_options: int) -> list:
     text = raw.strip().lstrip('\ufeff')
-
-    # Убираем markdown-блок если есть
     cb = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
     if cb:
         text = cb.group(1).strip()
 
-    # Вырезаем { ... }
     s, e = text.find('{'), text.rfind('}')
     if s != -1 and e != -1:
         text = text[s:e+1]
 
-    # Убираем trailing commas
     text = re.sub(r',\s*([}\]])', r'\1', text)
 
     try:
         data = json.loads(text)
-        # Поддерживаем разные ключи которые может вернуть GigaChat
         qs = data.get("questions") or next(
             (v for v in data.values()
              if isinstance(v, list) and v
@@ -66,7 +55,6 @@ def _parse_response(raw: str, num_options: int) -> list:
     except json.JSONDecodeError as exc:
         logger.warning("⚠️ json.loads: %s", exc)
 
-    # Fallback: regex-извлечение по шаблонам
     logger.info("🔧 Regex-извлечение...")
     qs = []
     for qm, om, cm in zip(
@@ -86,42 +74,32 @@ def _parse_response(raw: str, num_options: int) -> list:
 
     raise ValueError(f"Не удалось разобрать ответ GigaChat: {raw[:100]!r}")
 
-# ── Валидация и фильтрация вопросов ─────────────────────────
-
-# Паттерны мусорных/проблемных вопросов
 _BAD_PATTERNS = [
-    r'^\s*вопрос\s*\d*\s*[:\?]?\s*$',   # просто "Вопрос 1:"
-    r'^\s*\.{3,}\s*$',                    # "..."
-    r'^\s*$',                              # пустая строка
+    r'^\s*вопрос\s*\d*\s*[:\?]?\s*$',
+    r'^\s*\.\.\.,\s*$',
+    r'^\s*$',
 ]
 
 def _is_bad_question(q: dict, num_options: int) -> bool:
     text = q.get("question", "")
-    # Слишком короткий вопрос (менее 10 символов)
     if len(text.strip()) < 10:
         return True
-    # Вопрос по мусорному паттерну
     for p in _BAD_PATTERNS:
         if re.match(p, text, re.IGNORECASE):
             return True
-    # Одинаковые варианты ответов
     opts = q.get("options", [])
     if len(set(str(o).strip().lower() for o in opts)) < len(opts):
         return True
-    # Пустые варианты
     if any(not str(o).strip() for o in opts):
         return True
     return False
 
 def _fix_and_validate(q: dict, num_options: int) -> dict | None:
-    """Возвращает исправленный вопрос или None если вопрос безнадёжно плохой."""
     q = q.copy()
 
-    # Проверяем текст вопроса
     if not isinstance(q.get("question"), str) or not q["question"].strip():
         return None
 
-    # Исправляем варианты ответов
     opts = q.get("options", [])
     if not isinstance(opts, list):
         return None
@@ -133,21 +111,18 @@ def _fix_and_validate(q: dict, num_options: int) -> dict | None:
         opts.append(f"Вариант {chr(65 + len(opts))}")
     q["options"] = opts
 
-    # Исправляем индекс правильного ответа
     c = q.get("correct", 0)
     try:
         c = int(c)
     except (ValueError, TypeError):
         c = 0
 
-    # GigaChat часто даёт нумерацию с 1 (1,2,3,4) вместо 0-based
-    corrects_in_batch = None  # будет проверено в _fix_indexing на уровне батча
+    corrects_in_batch = None
     if c < 0 or c >= num_options:
         logger.warning("⚠️ correct=%d вне диапазона для '%s...' — сбрасываю в 0", c, q["question"][:40])
         c = 0
     q["correct"] = c
 
-    # Финальная проверка на мусор
     if _is_bad_question(q, num_options):
         logger.warning("⚠️ Плохой вопрос отфильтрован: '%s'", q["question"][:60])
         return None
@@ -155,7 +130,6 @@ def _fix_and_validate(q: dict, num_options: int) -> dict | None:
     return q
 
 def _fix_indexing(questions: list, num_options: int) -> list:
-    """Автодетект 1-based нумерации (GigaChat часто даёт 1,2,3,4 вместо 0,1,2,3)."""
     corrects = [q["correct"] for q in questions if isinstance(q.get("correct"), int)]
     if not corrects:
         return questions
@@ -166,12 +140,8 @@ def _fix_indexing(questions: list, num_options: int) -> list:
                 q["correct"] -= 1
     return questions
 
-# ── GigaChat ─────────────────────────────────────────────────
-
 def _call_gigachat(topic: str, count: int, difficulty: str, num_options: int) -> list:
     creds = os.getenv("GIGACHAT_CREDENTIALS", "")
-    scope = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")
-    model = os.getenv("GIGACHAT_MODEL", "GigaChat")
     if not creds:
         raise RuntimeError("GIGACHAT_CREDENTIALS не задан в .env")
 
@@ -179,16 +149,14 @@ def _call_gigachat(topic: str, count: int, difficulty: str, num_options: int) ->
     from gigachat.models import Chat, Messages, MessagesRole
 
     prompt = build_prompt(topic, count, difficulty, num_options)
-    logger.info("📤 GigaChat | %s | тема=%s | кол-во=%d", model, topic, count)
+    logger.info("📤 GigaChat | тема=%s | кол-во=%d", topic, count)
 
-    with GigaChat(credentials=creds, scope=scope, model=model, verify_ssl_certs=False) as gc:
+    with GigaChat(credentials=creds, verify_ssl_certs=False) as gc:
         resp = gc.chat(Chat(messages=[Messages(role=MessagesRole.USER, content=prompt)]))
 
     text = resp.choices[0].message.content
     logger.info("📥 Ответ: %d символов", len(text))
     return _parse_response(text, num_options)
-
-# ── Fallback банк ────────────────────────────────────────────
 
 _FALLBACK = [
     {"question": "Сколько планет в Солнечной системе?",        "options": ["6","7","8","9"],                                "correct": 2},
@@ -207,8 +175,6 @@ _FALLBACK = [
     {"question": "Сколько сторон у правильного шестиугольника?","options": ["4","5","6","7"],                                "correct": 2},
     {"question": "В каком году Гагарин полетел в космос?",      "options": ["1957","1959","1961","1963"],                    "correct": 2},
 ]
-
-# ── Публичный API ────────────────────────────────────────────
 
 def generate_questions(topic: str, count: int, difficulty: str, num_options: int) -> list:
     if os.getenv("GIGACHAT_CREDENTIALS"):

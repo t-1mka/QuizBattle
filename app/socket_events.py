@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Socket.IO события BrainStorm"""
 import time, logging, eventlet
 from flask import request
 from flask_socketio import emit, join_room, leave_room

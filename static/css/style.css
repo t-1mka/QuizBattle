@@ -1,4 +1,3 @@
-/* ===== QuizBattle — улучшенные стили ===== */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Russo+One&family=JetBrains+Mono:wght@700&display=swap');
 
 * {
@@ -59,19 +58,19 @@ body {
 }
 .view.active { display: block; animation: fadeIn 0.3s ease; }
 
-/* ===== ГЛАВНЫЙ ЭКРАН ===== */
 .hero { text-align: center; margin: 40px 0 30px; }
 
 .hero-logo {
     font-family: 'Russo One', sans-serif; font-size: 3.5rem;
     background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     text-shadow: 0 0 30px rgba(165,180,252,0.5); letter-spacing: 2px;
 }
 
 .hero-sub { color: var(--text-muted); font-size: 1.1rem; margin-top: 10px; }
 
-/* ===== ТАБЫ ===== */
 .tab-switcher {
     display: flex; gap: 10px;
     background: rgba(255,255,255,0.05);
@@ -89,7 +88,6 @@ body {
     color: white; box-shadow: 0 4px 15px rgba(74,144,226,0.4);
 }
 
-/* ===== КАРТОЧКИ ===== */
 .card {
     background: var(--card); backdrop-filter: blur(10px);
     border: 1px solid var(--border); border-radius: 24px;
@@ -97,7 +95,6 @@ body {
     box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
-/* ===== ПОЛЯ И КНОПКИ ===== */
 .inp {
     width: 100%; background: rgba(0,0,0,0.3);
     border: 1px solid rgba(255,255,255,0.2); border-radius: 16px;
@@ -129,7 +126,6 @@ body {
 .mt-12 { margin-top: 12px; }
 .mt-20 { margin-top: 20px; }
 
-/* ===== ЛОББИ ===== */
 .lobby-top { text-align: center; margin-bottom: 20px; }
 
 .code-block {
@@ -142,7 +138,9 @@ body {
     font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 800;
     letter-spacing: 4px;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .btn-icon {
@@ -151,7 +149,6 @@ body {
 }
 .btn-icon:hover { color: var(--accent); }
 
-/* Список игроков */
 .players-list {
     list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 15px;
 }
@@ -179,7 +176,6 @@ body {
 .mode-desc { margin-top: 15px; padding: 10px 14px; background: rgba(74,144,226,0.1); border-radius: 12px; font-size: 0.95rem; color: #cbd5e0; border-left: 3px solid var(--accent); }
 .lobby-footer { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
 
-/* ===== ИГРОВОЙ ЭКРАН ===== */
 .game-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 
 .progress-wrap { flex: 1; margin-right: 15px; }
@@ -201,7 +197,6 @@ body {
 }
 .exit-btn:hover { background: rgba(220,53,69,0.3); }
 
-/* Командная таблица */
 .team-board {
     display: none; align-items: center; justify-content: space-around;
     background: rgba(0,0,0,0.3); border-radius: 50px; padding: 10px; margin-bottom: 20px;
@@ -211,20 +206,20 @@ body {
 .tb-score { font-size: 1.5rem; font-weight: 800; }
 .tb-vs { font-size: 1.2rem; color: #8f9bb3; }
 
-/* Очки игрока */
 .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .score-lbl { color: var(--text-muted); }
 .score-val {
     font-size: 1.8rem; font-weight: 800;
     background: linear-gradient(135deg, var(--gold), var(--warning));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 .mode-badge, .diff-badge {
     background: rgba(255,255,255,0.1); border-radius: 20px;
     padding: 4px 12px; font-size: 0.8rem; font-weight: 600;
 }
 
-/* Карточка вопроса */
 .question-card {
     background: rgba(255,255,255,0.05); border-radius: 30px;
     padding: 30px; margin-bottom: 30px;
@@ -232,7 +227,6 @@ body {
 }
 .question-text { font-size: 1.5rem; font-weight: 700; line-height: 1.4; text-align: center; }
 
-/* ===== КНОПКИ ОТВЕТОВ ===== */
 .options-grid {
     display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;
 }
@@ -287,7 +281,6 @@ body {
     font-weight: 700; margin-top: 20px; display: none;
 }
 
-/* FFA Flash */
 .ffa-flash {
     display: none; background: linear-gradient(135deg, var(--warning), #ff6b6b);
     border-radius: 20px; padding: 15px 20px; text-align: center;
@@ -295,7 +288,6 @@ body {
     margin-top: 15px; animation: streakPop 0.4s ease;
 }
 
-/* Панель результатов вопроса */
 .result-panel {
     background: rgba(0,0,0,0.92); backdrop-filter: blur(15px);
     border-radius: 30px; padding: 25px; margin-top: 20px;
@@ -310,11 +302,12 @@ body {
 }
 .qr-next-hint { color: var(--text-muted); font-size: 0.9rem; }
 
-/* ===== ЭКРАН РЕЗУЛЬТАТОВ ===== */
 .results-h {
     font-size: 2.5rem; text-align: center; margin-bottom: 30px;
     background: linear-gradient(135deg, var(--gold), var(--warning));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     font-family: 'Russo One', sans-serif;
 }
 
@@ -343,7 +336,9 @@ body {
 .score {
     font-size: 1.5rem; font-weight: 800;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .result-banner {
@@ -353,7 +348,6 @@ body {
     display: none;
 }
 
-/* ===== ТОСТЫ ===== */
 .toasts { position: fixed; top: 20px; right: 20px; z-index: 1000; min-width: 200px; }
 .toast {
     background: rgba(10,14,30,0.95); backdrop-filter: blur(10px);
@@ -367,7 +361,6 @@ body {
 .toast-info    { border-color: var(--accent); }
 .toast-streak  { border-color: var(--warning); background: rgba(30,15,0,0.95); animation: streakPop 0.4s ease; }
 
-/* ===== ЭКРАН ЗАГРУЗКИ ===== */
 .loading-spinner {
     width: 60px; height: 60px; border-radius: 50%;
     border: 4px solid var(--border);
@@ -376,8 +369,6 @@ body {
     margin: 20px auto;
 }
 
-/* ===== ДОПОЛНЕНИЯ: BrainStorm ===== */
-
 .card-title {
     font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;
 }
@@ -385,7 +376,6 @@ body {
     color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;
 }
 
-/* Ошибка под полем */
 .field-error {
     color: #ff6b6b; font-size: 0.85rem; margin-top: 6px; font-weight: 600;
 }
@@ -394,10 +384,8 @@ body {
     box-shadow: 0 0 0 3px rgba(220,53,69,0.25) !important;
 }
 
-/* Вкладки — панели */
 .tab-panel { animation: fadeIn 0.2s ease; }
 
-/* Гость — сетка настроек */
 .guest-settings-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;
 }
@@ -420,6 +408,5 @@ body {
     padding: 10px; background: rgba(255,255,255,0.03); border-radius: 10px;
 }
 
-/* Цвета команд */
 .team-1-color { color: #90caff; }
 .team-2-color { color: #ffb3b3; }

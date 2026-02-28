@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""BrainStorm — локальный запуск: python run.py"""
 import os, sys, subprocess, logging, socket as _socket
 
 os.environ["PYTHONUTF8"] = "1"
@@ -32,7 +31,6 @@ if not os.path.exists(env_f) and os.path.exists(ex_f):
 from dotenv import load_dotenv
 load_dotenv(override=False)
 
-# ── Логирование ──────────────────────────────────────────────
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
 log_level = getattr(logging, log_level_name, logging.INFO)
 
@@ -46,7 +44,6 @@ logging.getLogger("engineio").setLevel(logging.WARNING)
 logging.getLogger("socketio").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-# ── Локальный IP ─────────────────────────────────────────────
 def get_local_ip() -> str:
     try:
         s = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
@@ -57,7 +54,6 @@ def get_local_ip() -> str:
     except Exception:
         return "127.0.0.1"
 
-# ── Запуск ───────────────────────────────────────────────────
 from app import create_app, socketio
 from app.ai_client import active_backend
 
@@ -71,7 +67,6 @@ ai_info  = active_backend()
 W = 48  # ширина содержимого рамки
 
 def row(text=""):
-    # text может содержать emoji (2 символа ширины) — считаем визуальную ширину
     visual = sum(2 if ord(c) > 0x2E7F else 1 for c in text)
     pad = W - visual
     return f"  {text}{' ' * max(pad, 0)}"

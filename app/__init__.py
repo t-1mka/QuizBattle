@@ -26,6 +26,6 @@ def create_app() -> Flask:
     from .routes import bp
     app.register_blueprint(bp)
 
-    from . import socket_events  # noqa: F401 — регистрирует обработчики
+    from . import socket_events
 
     return app
