@@ -51,18 +51,13 @@ git clone <repository-url>
 cd BrainStorm
 ```
 
-2. Создайте виртуальное окружение:
-```bash
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# Linux/Mac
-source venv/bin/activate
-```
-
 3. Установите зависимости:
 ```bash
 pip install -r requirements.txt
+```
+4. Можно играть:
+```bash
+start.bat
 ```
 
 ## 2. **Конфигурация**
